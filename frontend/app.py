@@ -2882,8 +2882,8 @@ def create_app():
                     trellis_input = gr.Image(label="Upload Image", type="filepath")
                     trellis_input_path = gr.Textbox(visible=True)    
 
-                    trells_output = gr.Video(value='/trellisfiles/horse.mp4', label="Video", show_label=False, visible=True)
-                    trells_output2 = gr.Video(value='./trellisfiles/horse.mp4', label="Video", show_label=False, visible=True)
+                    trells_output = gr.Video(value='/tmp/20251014_061506.mp4', label="Video", show_label=False, visible=True)
+                    trells_output2 = gr.Video(value='./tmp/20251014_061506.mp4', label="Video", show_label=False, visible=True)
                     trellis_output_path = gr.Textbox(visible=True)  
                     btn_trellis_generate = gr.Button("Generate")
 
