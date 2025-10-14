@@ -124,7 +124,7 @@ services:
   tr:
     build:
       context: ./tr
-    image: xoo4foo/tr19:latest
+    image: xoo4foo/tr20:latest
     runtime: nvidia
     deploy:
       resources:
