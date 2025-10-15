@@ -3257,10 +3257,6 @@ def create_app():
         ).then(
             lambda: gr.update(visible=True),
             None,
-            btn_interface
-        ).then(
-            lambda: gr.update(visible=True),
-            None,
             acc_load
         ).then(
             lambda: gr.update(visible=True),
