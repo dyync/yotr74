@@ -23,19 +23,25 @@ services:
       - VLLM_PORT=1370
       - REDIS_PORT=6379
       - BACKEND_PORT=7861
-      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_VISIBLE_DEVICES=0  # Use specific GPU
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     volumes:
       - ./backend:/usr/src/app
       - ./utils:/usr/src/app/utils   
       - /var/run/docker.sock:/var/run/docker.sock
       - ../logs:/usr/src/app/logs
       - /models:/models
-    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     depends_on:
       - redis
     restart: unless-stopped  
 
-  
   image:
     build:
       context: ./image
@@ -48,20 +54,26 @@ services:
       - IMAGE_IP=0.0.0.0
       - IMAGE_PORT=1374
       - REDIS_PORT=6379
-      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_VISIBLE_DEVICES=0
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+      - CUDA_VISIBLE_DEVICES=0
     volumes:
       - ./image:/usr/src/app
       - ./utils:/usr/src/app/utils    
       - ../logs:/usr/src/app/logs
       - /models:/models
       - /tmp:/tmp
-    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     depends_on:
       - redis
     restart: unless-stopped
 
-
-      
   video:
     build:
       context: ./video
@@ -74,7 +86,8 @@ services:
       - VIDEO_IP=0.0.0.0
       - VIDEO_PORT=1376
       - REDIS_PORT=6379
-      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_VISIBLE_DEVICES=0
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
     volumes:
       - ./video:/usr/src/app
       - ./image:/usr/src/app/image  
@@ -82,24 +95,21 @@ services:
       - ../logs:/usr/src/app/logs
       - /models:/models
       - /tmp:/tmp
-    runtime: nvidia
-    depends_on:
-      - redis
-    restart: unless-stopped
-
-    
-  vllm:
-    build:
-      context: ./vllm
-    image: xoo4foo/zzvllm52:latest
-    runtime: nvidia
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: all
+              count: 1
               capabilities: [gpu]
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  vllm:
+    build:
+      context: ./vllm
+    image: xoo4foo/zzvllm52:latest
     ports:
       - "1370:1370"
     networks:
@@ -109,15 +119,24 @@ services:
       - /models:/models
     shm_size: 8gb
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_VISIBLE_DEVICES=0
+      - CUDA_VISIBLE_DEVICES=0
       - NCCL_DEBUG=INFO
       - VLLM_PORT=1370
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     command: [
       "python", "app.py",
       "--model", "Qwen/Qwen2.5-1.5B-Instruct",
       "--port", "1370",
       "--tensor-parallel-size", "1",
-      "--gpu-memory-utilization", "0.85",
+      "--gpu-memory-utilization", "0.7",  # Reduced from 0.85
       "--max-model-len", "4096"
     ]
 
@@ -125,14 +144,6 @@ services:
     build:
       context: ./tr
     image: xoo4foo/tr22:latest
-    runtime: nvidia
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
     ports:
       - "1379:1379"
     networks:
@@ -150,10 +161,19 @@ services:
       - /tmp:/tmp
     shm_size: 8gb
     environment:
-      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_VISIBLE_DEVICES=0
+      - CUDA_VISIBLE_DEVICES=0
       - NCCL_DEBUG=INFO
       - TR_IP=0.0.0.0
       - TR_PORT=1379
+      - PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
   frontend:
     build:
@@ -175,7 +195,7 @@ services:
       - VIDEO_PORT=1376
       - TRAIN_PORT=1378
       - TR_PORT=1379
-      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_VISIBLE_DEVICES=0
     volumes:
       - ./frontend:/usr/src/app
       - ./trellisfiles:/usr/src/app/tr/app/TRELLIS
@@ -187,7 +207,13 @@ services:
       - ../logs:/usr/src/app/logs
       - /models:/models
       - /tmp:/tmp
-    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     depends_on:
       - redis
       - image
