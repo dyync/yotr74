@@ -42,12 +42,13 @@ async def update_timer():
 
 VLLM_URL = f'http://container_vllm_xoo:{os.getenv("VLLM_PORT")}/status'
 BACKEND_URL = f'http://container_backend:{os.getenv("BACKEND_PORT")}/docker'
-IMAGE_URL = f'http://container_image:{os.getenv("IMAGE_PORT")}/generate'
+IMAGE_URL = f'http://container_video:{os.getenv("VIDEO_PORT")}/generateimage'
+VIDEO_URL = f'http://container_video:{os.getenv("VIDEO_PORT")}/generatevideo'
 TR_URL = f'http://container_tr:{os.getenv("TR_PORT")}'
 VIP_URL = f'http://container_vip:{os.getenv("VIP_PORT")}'
 
 
-IMAGE_DEFAULT = f'/usr/src/app/image/dragon.png'
+IMAGE_DEFAULT = f'/usr/src/app/video/dragon.png'
 VIDEO_DEFAULT = f'/usr/src/app/video/napoli.mp4'
 
 REQUEST_TIMEOUT = 300
@@ -1254,6 +1255,7 @@ def video_input_generate(video_input_toggle,video_input_prompt,video_input_uploa
 def video_generate(video_image,video_input_prompt,video_model,video_device,video_compute_type,video_variant,video_decode_chunk_size,video_motion_bucket_id,video_noise_aug_strength,video_fps):  
     
     global BACKEND_URL
+    global VIDEO_URL
     try:
         print(f'[video_generate] starting ...')
         logging.info(f'[video_generate] starting ...')
@@ -1286,7 +1288,7 @@ def video_generate(video_image,video_input_prompt,video_model,video_device,video
         print(f'[video_generate] vllm_stop_response: {vllm_stop_response} ...')
         logging.info(f'[video_generate] vllm_stop_response: {vllm_stop_response} ...')
     
-        VIDEO_URL = f'http://container_video:{os.getenv("VIDEO_PORT")}/generate'
+        
 
         print(f'[video_generate] VIDEO_URL ... {VIDEO_URL}')
         logging.info(f'[video_generate] VIDEO_URL ... {VIDEO_URL}')
@@ -2000,14 +2002,6 @@ def llm_prompt(*params):
             print(f'[llm_prompt] >> got response == 200 ... {response}')
             logging.info(f'[llm_prompt] >> got response == 200 ... {response}')
         else:
-            print(f'[llm_prompt] >> got response != 200 ... stopping image ...')
-            logging.info(f'[llm_prompt] >> got response != 200 ... stopping image ...')
-            container_image_stop_response = requests.post(BACKEND_URL, json={
-                "method":"restart",
-                "model":"container_image"
-            }, timeout=60)
-            print(f'[llm_prompt] >> container_image_stop_response: {container_image_stop_response}')
-            logging.info(f'[llm_prompt] >> container_image_stop_response: {container_image_stop_response}')
             
             print(f'[llm_prompt] >> got response != 200 ... stopping video ...')
             logging.info(f'[llm_prompt] >> got response != 200 ... stopping video ...')
@@ -2056,15 +2050,6 @@ def llm_prompt(*params):
                 print(f'[llm_prompt] >> got response == 200 ... {response}')
                 logging.info(f'[llm_prompt] >> got response == 200 ... {response}')
             else:
-                print(f'[llm_prompt] >> got response != 200 ... stopping image ...')
-                logging.info(f'[llm_prompt] >> got response != 200 ... stopping image ...')
-                container_image_stop_response = requests.post(BACKEND_URL, json={
-                    "method":"restart",
-                    "model":"container_image"
-                }, timeout=60)
-                print(f'[llm_prompt] >> container_image_stop_response: {container_image_stop_response}')
-                logging.info(f'[llm_prompt] >> container_image_stop_response: {container_image_stop_response}')
-                
                 print(f'[llm_prompt] >> got response != 200 ... stopping video ...')
                 logging.info(f'[llm_prompt] >> got response != 200 ... stopping video ...')
                 container_video_stop_response = requests.post(BACKEND_URL, json={
