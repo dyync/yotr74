@@ -3323,20 +3323,6 @@ def create_app():
         )
 
 
-        vllm_running_engine_arguments_show.click(
-            lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=True)], 
-            None, 
-            [vllm_running_engine_arguments_show, vllm_running_engine_arguments_close, acc_load]
-        )
-        
-        vllm_running_engine_arguments_close.click(
-            lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=False)], 
-            None, 
-            [vllm_running_engine_arguments_show, vllm_running_engine_arguments_close, acc_load]
-        )
-
-
-
 
         btn_load.click(
             lambda: gr.update(value="Deploying huuh"),
@@ -3429,7 +3415,7 @@ if __name__ == "__main__":
             "port":1370,
             "model":"Qwen/Qwen2.5-1.5B-Instruct",
             "tensor_parallel_size":1,
-            "gpu_memory_utilization":0.87,
+            "gpu_memory_utilization":0.7,
             "max_model_len":4096
         }, timeout=60)
 
