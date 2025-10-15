@@ -161,10 +161,20 @@ def generate_video(model_id, input_image_path, device, torch_dtype, variant,
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] generating video from image: {input_image_path_local}')
 
 
+        # bringt gor nix
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] trying to empty cache ...1')
+        current_model.to("cpu")
 
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] trying to empty cache ...')
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] trying to empty cache ...2')
+
+        current_model = None
+
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] trying to empty cache ...3')
         torch.cuda.empty_cache()
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] cache cleared!')
+
+
+
         # Generate video frames
         frames = current_pipeline(
             input_image,
