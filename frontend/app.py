@@ -2287,7 +2287,7 @@ custom_html = """
     <meta name="description" content="FREE video/image/LLM AI! No Sign-Up. No monthly subscription.">
     <meta name="keywords" content="web application, e-commerce, social media marketing, bots, data analysis, hire coder, javascript, python, react, ai, nginx, laravel, linux">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="/usr/src/app/utils/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/usr/src/app/favicon.ico">
 
     <style>
         :root {
