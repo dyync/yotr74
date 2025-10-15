@@ -149,7 +149,10 @@ def generate_video(model_id, input_image_path, device, torch_dtype, variant,
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] trying to load pipeline: {model_id}')
         load_pipeline(model_id, device, torch_dtype, variant)
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] Pipeline loaded!')
-        
+
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [input_image_path] input_image_path: {input_image_path}')
+        input_image_path_local = input_image_path.split('/')[:-1]
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [input_image_path] input_image_path: {input_image_path} <- new')
         # Load input image
         input_image = Image.open(input_image_path)
         

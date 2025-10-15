@@ -3408,6 +3408,16 @@ if __name__ == "__main__":
 
         app = create_app()
         fastapi_app = FastAPI()
+        fastapi_app.mount("/files", StaticFiles(directory="/"), name="files")
+
+        @fastapi_app.get("/f/{filename}")
+        async def fnfiles(video_name: str):
+            file_path = f"/{filename}"  # Updated path
+            if not os.path.exists(file_path):
+                raise HTTPException(status_code=404, detail="Video not found")
+            if not filename.lower().endswith('.mp4'):
+                raise HTTPException(status_code=400, detail="Only MP4 files are supported")
+            return FileResponse(file_path, media_type="video/mp4")
 
         @fastapi_app.get("/v2/{video_name}")
         async def fnvi(video_name: str):
