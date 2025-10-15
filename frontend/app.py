@@ -2272,7 +2272,7 @@ custom_html = """
     <meta name="description" content="FREE video/image/LLM AI! No Sign-Up. No monthly subscription.">
     <meta name="keywords" content="web application, e-commerce, social media marketing, bots, data analysis, hire coder, javascript, python, react, ai, nginx, laravel, linux">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="/usr/src/app/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
 
     <style>
         :root {
@@ -2281,7 +2281,7 @@ custom_html = """
         }
         
         .gradio-container {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
         }
     </style>
 </head>
@@ -3411,13 +3411,11 @@ if __name__ == "__main__":
         fastapi_app.mount("/files", StaticFiles(directory="/"), name="files")
 
         @fastapi_app.get("/f/{filename}")
-        async def fnfiles(video_name: str):
+        async def fnfiles(filename: str):
             file_path = f"/{filename}"  # Updated path
             if not os.path.exists(file_path):
-                raise HTTPException(status_code=404, detail="Video not found")
-            if not filename.lower().endswith('.mp4'):
-                raise HTTPException(status_code=400, detail="Only MP4 files are supported")
-            return FileResponse(file_path, media_type="video/mp4")
+                raise HTTPException(status_code=404, detail="File not found")
+            return FileResponse(file_path)
 
         @fastapi_app.get("/v2/{video_name}")
         async def fnvi(video_name: str):
