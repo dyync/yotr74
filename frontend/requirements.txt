@@ -12,4 +12,3 @@ datasets
 torch
 gitpython
 pynvml
-plotly

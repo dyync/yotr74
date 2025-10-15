@@ -26,8 +26,6 @@ from git import Repo
 # import redis
 import redis.asyncio as redis
 
-import plotly.graph_objects as go
-
 
 
 
@@ -45,11 +43,9 @@ async def update_timer():
 VLLM_URL = f'http://container_vllm_xoo:{os.getenv("VLLM_PORT")}/status'
 BACKEND_URL = f'http://container_backend:{os.getenv("BACKEND_PORT")}/docker'
 IMAGE_URL = f'http://container_image:{os.getenv("IMAGE_PORT")}/generate'
-TRAIN_URL = f'http://container_train:{os.getenv("TRAIN_PORT")}'#
 TR_URL = f'http://container_tr:{os.getenv("TR_PORT")}'
-# TR_DEFAULT = f'/usr/src/app/tr/ho.mp4'
-# TR_DEFAULT = f'/usr/src/app/tr/trellisfiles/horse.mp4'
-# TR_DEFAULT = f'/gyatt/horse.mp4'
+VIP_URL = f'http://container_vip:{os.getenv("VIP_PORT")}'
+
 
 IMAGE_DEFAULT = f'/usr/src/app/image/dragon.png'
 VIDEO_DEFAULT = f'/usr/src/app/video/napoli.mp4'
@@ -952,6 +948,75 @@ def get_video_image_path(image_file):
 def get_trellis_image_path(image_file):
     req_file = image_file
     return f'{image_file}'
+
+
+def get_vip_image_path(image_file):
+    req_file = image_file
+    # return [f'req_file: {image_file}', f'{req_file}']
+    return f'{image_file}'
+
+
+def vip_generate(input_path,req_vers):  
+    
+    try:
+
+        global BACKEND_URL
+        global VIP_URL
+
+        # print(f'[vip_generate] starting ...')
+        # logging.info(f'[vip_generate] starting ...')
+        # vllm_stop_response = requests.post(BACKEND_URL, json={
+        #     "method":"stop",
+        #     "model":"container_vllm_xoo"
+        # }, timeout=60)
+
+
+        # print(f'[vip_generate] vllm_stop_response: {vllm_stop_response} ...')
+        # logging.info(f'[vip_generate] vllm_stop_response: {vllm_stop_response} ...')
+
+        print(f'[vip_generate] getting status ... ')
+        logging.info(f'[vip_generate] getting status ... ')
+        
+        response = requests.post(f'{VIP_URL}/generate', json={
+            "method": "status"
+        }, timeout=600)
+
+        if response.status_code == 200:          
+            print(f'[vip_generate] >> got response == 200 ... building json ... {response}')
+            logging.info(f'[vip_generate] >> got response == 200 ... building json ... {response}')
+            res_json = response.json()    
+            print(f'[vip_generate] >> got res_json ... {res_json}')
+            logging.info(f'[vip_generate] >> got res_json ... {res_json}')
+
+            if res_json["result_data"] == "ok":
+                print(f'[vip_generate] >> status: "ok" ... starting to generate image .... ')
+                logging.info(f'[vip_generate] >> status: "ok" ... starting to generate image .... ')
+      
+                response = requests.post(f'{VIP_URL}/generate', json={
+                    "method": "go",
+                    "req_path": input_path,
+                    "image_prompt": input_path,
+                    "req_ver": req_vers
+                })
+
+                print(f'[vip_generate] >> got response #22222 == 200 ... building json ... {response}')
+                logging.info(f'[vip_generate] >> got response #22222 == 200 ... building json ... {response}')
+                
+                res_json = response.json()
+                
+                if res_json["result_status"] == 200:
+                    return f'/usr/src/app/vip/{res_json["result_data"]}',f'/usr/src/app/vip/{res_json["result_data"]}'
+                else: 
+                    return f'{VIP_DEFAULT}',f'{VIP_DEFAULT}'
+            else:
+                print('[vip_generate] ERROR IMAGE SERVER DOWN!?')
+                logging.info('[vip_generate] ERROR IMAGE SERVER DOWN!?')
+                return f'{VIP_DEFAULT}',f'{VIP_DEFAULT}'
+
+    except Exception as e:
+        return f'Error: {e}'
+
+
 
 def audio_transcribe(audio_model,audio_path,audio_device,audio_compute_type):  
     try:
@@ -2212,174 +2277,6 @@ def change_tab(n):
 
 
 
-
-
-
-
-
-
-
-def upload_training_data(json_data):
-    """Upload training data in JSON format"""
-    try:
-        # Parse the JSON data
-        training_data = json.loads(json_data)
-        
-        # Validate the structure
-        if not isinstance(training_data, list):
-            return "Error: JSON should be an array of training examples"
-        
-        for example in training_data:
-            if not all(key in example for key in ['instruction', 'input', 'output']):
-                return "Error: Each example must have 'instruction', 'input', and 'output' fields"
-        
-        # Save to training data file (this would typically be sent to the train endpoint)
-        # For now, we'll simulate saving locally
-        training_data_path = "./training_data.jsonl"
-        with open(training_data_path, 'w') as f:
-            for example in training_data:
-                f.write(json.dumps(example) + '\n')
-        
-        return f"Successfully uploaded {len(training_data)} training examples!"
-    
-    except json.JSONDecodeError:
-        return "Error: Invalid JSON format"
-    except Exception as e:
-        return f"Error: {str(e)}"
-
-def get_training_status():
-    """Get current training status from the endpoint"""
-    try:
-        response = requests.get(f"{TRAIN_URL}/training_status", timeout=10)
-        if response.status_code == 200:
-            return response.json()["result_data"]
-        else:
-            return {"status": "error", "message": "Failed to get training status"}
-    except requests.exceptions.RequestException:
-        return {"status": "error", "message": "Cannot connect to training service"}
-
-def start_training():
-    """Start the training process"""
-    try:
-        response = requests.post(f"{TRAIN_URL}/train", timeout=30)
-        if response.status_code == 200:
-            return "Training started successfully!"
-        else:
-            return "Failed to start training"
-    except requests.exceptions.RequestException:
-        return "Cannot connect to training service"
-
-def get_training_steps_table():
-    """Get table with all current training steps"""
-    # This would typically come from the training service
-    # For now, we'll simulate some training steps
-    status = get_training_status()
-    
-    steps = [
-        {"Step": "Data Preparation", "Status": "Completed", "Timestamp": "2024-01-15 10:30:00", "Details": "100 examples loaded"},
-        {"Step": "Model Initialization", "Status": "Completed", "Timestamp": "2024-01-15 10:32:00", "Details": "4-bit quantization applied"},
-        {"Step": "LoRA Configuration", "Status": "Completed", "Timestamp": "2024-01-15 10:35:00", "Details": "r=64, alpha=16"},
-    ]
-    
-    if status.get("status") == "training":
-        steps.append({"Step": "Training", "Status": "In Progress", "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Details": "Epoch 2/5"})
-    elif status.get("status") == "completed":
-        steps.append({"Step": "Training", "Status": "Completed", "Timestamp": status.get("completed_at", "N/A"), "Details": "Model saved successfully"})
-    
-    return pd.DataFrame(steps)
-
-def analyze_training_progress():
-    """Analyze current training status with similarity metrics"""
-    # This would typically come from the training service's evaluation endpoint
-    # For now, we'll simulate some progress data
-    
-    progress_data = {
-        "epochs": [1, 2, 3, 4, 5],
-        "similarity_scores": [0.45, 0.58, 0.67, 0.72, 0.78],
-        "loss_values": [2.1, 1.4, 0.9, 0.6, 0.4],
-        "rating_scores": [6.8, 7.2, 7.5, 7.8, 8.1],
-        "combined_scores": [0.51, 0.63, 0.71, 0.76, 0.82]
-    }
-    
-    # Create progress chart
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(x=progress_data["epochs"], y=progress_data["similarity_scores"], 
-                           name="Similarity Score", line=dict(color='blue')))
-    fig.add_trace(go.Scatter(x=progress_data["epochs"], y=progress_data["rating_scores"], 
-                           name="Rating Score", line=dict(color='green')))
-    fig.add_trace(go.Scatter(x=progress_data["epochs"], y=progress_data["combined_scores"], 
-                           name="Combined Score", line=dict(color='red')))
-    fig.update_layout(title="Training Progress Metrics", xaxis_title="Epoch", yaxis_title="Score")
-    
-    analysis_text = f"""
-    ## Training Progress Analysis
-    
-    **Current Status:** {get_training_status().get('status', 'unknown')}
-    
-    **Key Improvements:**
-    - Similarity score improved by {progress_data['similarity_scores'][-1] - progress_data['similarity_scores'][0]:.2f}
-    - Rating quality improved by {progress_data['rating_scores'][-1] - progress_data['rating_scores'][0]:.1f}
-    - Combined performance improved by {progress_data['combined_scores'][-1] - progress_data['combined_scores'][0]:.2f}
-    
-    **Recommendations:**
-    - Continue training for 1-2 more epochs for optimal results
-    - Consider adding more diverse training examples
-    """
-    
-    return analysis_text, fig
-
-def get_best_plots():
-    """Get 3 current best plots written by AI"""
-    # This would typically come from the generate_and_evaluate endpoint
-    # For now, we'll simulate some example plots
-    
-    best_plots = [
-        {
-            "title": "The Quantum Heist",
-            "plot": "A team of quantum physicists plans an impossible heist to steal a revolutionary energy source from a parallel dimension. As they navigate through alternate realities, they discover that the true treasure isn't the energy source, but the knowledge to save their own dying world.",
-            "score": 0.92,
-            "rating": 8.7
-        },
-        {
-            "title": "Echoes of the Forgotten",
-            "plot": "An archivist discovers that ancient myths are actually historical records of a lost civilization. She must decipher the clues before a shadowy organization destroys the evidence, racing against time to preserve humanity's true origins.",
-            "score": 0.88,
-            "rating": 8.3
-        },
-        {
-            "title": "Neon Shadows",
-            "plot": "In a cyberpunk metropolis, a rogue AI detective and a human resistance fighter form an unlikely alliance to expose a corporate conspiracy that threatens to replace human emotions with artificial ones.",
-            "score": 0.85,
-            "rating": 8.1
-        }
-    ]
-    
-    plot_display = []
-    for i, plot in enumerate(best_plots, 1):
-        plot_display.append(
-            f"### {i}. {plot['title']}\n"
-            f"**Score:** {plot['score']} | **Rating:** {plot['rating']}/10\n"
-            f"{plot['plot']}\n"
-            "---"
-        )
-    
-    return "\n".join(plot_display)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 custom_html = """
 <!DOCTYPE html>
 <html>
@@ -2387,10 +2284,10 @@ custom_html = """
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>NAI9</title>		
-    <meta name="description" content="FREE video/image/llm AI! No Sign-Up. No monthly subscription.">
+    <meta name="description" content="FREE video/image/LLM AI! No Sign-Up. No monthly subscription.">
     <meta name="keywords" content="web application, e-commerce, social media marketing, bots, data analysis, hire coder, javascript, python, react, ai, nginx, laravel, linux">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/x-icon" href="/usr/src/app/utils/favicon.ico">
 
     <style>
         :root {
@@ -2801,82 +2698,7 @@ def create_app():
 
 
 
-            with gr.TabItem("Train", id=4):
-                with gr.Row():
-                    with gr.Column(scale=1):
-                        gr.Markdown("## Upload Training Data")
-                        training_json = gr.Textbox(
-                            label="Training Data (JSON format)",
-                            placeholder='[{"instruction": "...", "input": "...", "output": "..."}, ...]',
-                            lines=10,
-                            max_lines=20
-                        )
-                        upload_btn = gr.Button("Upload Data")
-                        upload_status = gr.Textbox(label="Upload Status", interactive=False)
-                        
-                        gr.Markdown("## Training Control")
-                        start_train_btn = gr.Button("Start Training")
-                        training_status = gr.Textbox(label="Training Status", interactive=False)
-                        
-                        refresh_btn = gr.Button("Refresh Status")
-                    
-                    with gr.Column(scale=2):
-                        gr.Markdown("## Training Progress")
-                        steps_table = gr.Dataframe(
-                            label="Training Steps",
-                            headers=["Step", "Status", "Timestamp", "Details"],
-                            interactive=False
-                        )
-                        
-                        gr.Markdown("## Performance Analysis")
-                        analysis_text = gr.Markdown()
-                        analysis_plot = gr.Plot()
-                        
-                        gr.Markdown("## Best Generated Plots")
-                        best_plots = gr.Markdown()
-                
-                # Event handlers
-                upload_btn.click(
-                    fn=upload_training_data,
-                    inputs=training_json,
-                    outputs=upload_status
-                )
-                
-                start_train_btn.click(
-                    fn=start_training,
-                    outputs=training_status
-                )
-                
-                refresh_btn.click(
-                    fn=lambda: get_training_status().get("message", "Unknown status"),
-                    outputs=training_status
-                )
-                
-                refresh_btn.click(
-                    fn=get_training_steps_table,
-                    outputs=steps_table
-                )
-                
-                refresh_btn.click(
-                    fn=analyze_training_progress,
-                    outputs=[analysis_text, analysis_plot]
-                )
-                
-                refresh_btn.click(
-                    fn=get_best_plots,
-                    outputs=best_plots
-                )
-                
-                # Initial load
-                training_status.value = get_training_status().get("message", "Unknown status")
-                steps_table.value = get_training_steps_table()
-                analysis_text.value, analysis_plot.value = analyze_training_progress()
-                best_plots.value = get_best_plots()
-
-
-
-
-            with gr.TabItem("3D", id=5):
+            with gr.TabItem("3D", id=4):
 
                 with gr.Row():
                     trellis_input = gr.Image(label="Upload Image", type="filepath")
@@ -2898,42 +2720,34 @@ def create_app():
                         [trells_output,trellis_output_path]
                     )
 
+            with gr.TabItem("VIP", id=5):
 
-                                    
-            with gr.TabItem("Interface", id=6):
-                with gr.Row(visible=True) as row_interface:
-                    with gr.Column(scale=2):
-                        with gr.Accordion(("Interface"), open=True, visible=True) as acc_interface:
+                with gr.Row(visible=False) as row_vip_out:
+                    vip_output = gr.Image(value=None, label="Image", show_label=False)
+                    vip_output_text = gr.Textbox(value="",visible=True)
+                
+                with gr.Row(visible=True) as row_vip_input:
+                    vip_image_input = gr.Image(value=None, label="Image", show_label=False, type="filepath")
+        
+                    vip_image_input_path = gr.Textbox(visible=True)
+                    vip_req_vers = gr.Textbox(value="Complex Lines",visible=True)
+        
+                with gr.Row() as row_video_generate:
+                    btn_vip_generate = gr.Button("ERSTELLEN", variant="primary")
 
-
-
-                            with gr.Column(scale=1, visible=True) as vllm_running_engine_argumnts_btn:
-                                vllm_running_engine_arguments_show = gr.Button("LOAD VLLM CREATEEEEEEEEUUUUHHHHHHHH", variant="primary")
-                                vllm_running_engine_arguments_close = gr.Button("CANCEL")
-
-                                    
-
-
-
-
-
-                            
-                            btn_interface = gr.Button("Load Interface",visible=True)
-                            @gr.render(inputs=[selected_model_pipeline_tag, selected_model_id], triggers=[btn_interface.click])
-                            def show_split(text_pipeline, text_model):
-                                if len(text_model) == 0:
-                                    gr.Markdown("Error pipeline_tag or model_id")
-                                else:
-                                    selected_model_id_arr = str(text_model).split('/')
-                                    print(f'selected_model_id_arr {selected_model_id_arr}...')            
-                                    gr.Interface.from_pipeline(pipeline(text_pipeline, model=f'/models/{selected_model_id_arr[0]}/{selected_model_id_arr[1]}'))
-
-
-
-                    with gr.Column(scale=1):
-                        with gr.Row() as vllm_prompt:
-                            interface_btn = gr.Button("Load Gradio Interface")
-       
+            btn_vip_generate.click(
+                get_vip_image_path,
+                vip_image_input,
+                vip_image_input_path
+            ).then(
+                lambda: gr.update(visible=True), 
+                None, 
+                row_vip_out
+            ).then(
+                vip_generate,
+                [vip_image_input_path,vip_req_vers],
+                [vip_output,vip_output_text]
+            )
         
         audio_transcribe_btn.click(
             lambda: gr.update(visible=True), 

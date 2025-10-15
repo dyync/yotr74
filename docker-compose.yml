@@ -174,6 +174,30 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+  vip:
+    build:
+      context: ./vip
+    ports:
+      - "1372:1372"
+    networks:
+      - sys_net
+    container_name: container_vip
+    environment:
+      - VIP_IP=0.0.0.0
+      - VIP_PORT=1372
+      - REDIS_PORT=6379
+      - NVIDIA_VISIBLE_DEVICES=all
+    volumes:
+      - ./vip:/usr/src/app
+      - ./utils:/usr/src/app/utils    
+      - ../logs:/usr/src/app/logs
+      - /models:/models
+      - /tmp:/tmp
+    runtime: nvidia
+    depends_on:
+      - redis
+    restart: unless-stopped
+
 
   frontend:
     build:
@@ -190,6 +214,7 @@ services:
       - REDIS_PORT=6379
       - BACKEND_PORT=7861
       - AUDIO_PORT=8000
+      - VIP_PORT=1372
       - IMAGE_PORT=1374
       - TTS_PORT=1375
       - VIDEO_PORT=1376
@@ -200,6 +225,7 @@ services:
       - ./frontend:/usr/src/app
       - ./trellisfiles:/usr/src/app/tr/app/TRELLIS
       - ./tr:/usr/src/app/tr
+      - ./vip:/usr/src/app/vip
       - ./image:/usr/src/app/image
       - ./video:/usr/src/app/video
       - ./utils:/usr/src/app/utils
