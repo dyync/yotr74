@@ -151,13 +151,14 @@ def generate_video(model_id, input_image_path, device, torch_dtype, variant,
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] Pipeline loaded!')
 
         print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [input_image_path] input_image_path: {input_image_path}')
-        input_image_path_local = input_image_path.split('/')[:-1]
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [input_image_path] input_image_path: {input_image_path} <- new')
+        input_image_path_local = input_image_path.split('/')[-1]
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [input_image_path] input_image_path_local: {input_image_path_local} <- local')
         # Load input image
-        input_image = Image.open(input_image_path)
+        # input_image = Image.open(input_image_path)
+        input_image = Image.open(input_image_path_local)
         
         start_time = time.time()
-        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] generating video from image: {input_image_path}')
+        print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [generate_video] generating video from image: {input_image_path_local}')
         
         # Generate video frames
         frames = current_pipeline(
